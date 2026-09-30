@@ -1,7 +1,4 @@
-using FoundryDocumentIntelligence.Ingestion;
-
 var builder = Host.CreateApplicationBuilder(args);
-builder.Services.AddHostedService<Worker>();
-
 var host = builder.Build();
-host.Run();
+await host.StartAsync();
+await host.StopAsync();

@@ -10,9 +10,15 @@ public sealed record CanonicalDocument(
     string? Summary,
     string? DocumentType,
     IReadOnlyList<CanonicalPage> Pages,
-    IReadOnlyDictionary<string, object?> Metadata,
+    IReadOnlyDictionary<string, CanonicalMetadataValue> Metadata,
     IReadOnlyList<string> Tags,
     IReadOnlyList<CanonicalEntity> Entities);
+
+public sealed record CanonicalMetadataValue(
+    object? Value,
+    InformationOrigin Origin,
+    double? Confidence,
+    IReadOnlyList<Evidence> Evidence);
 
 public sealed record CanonicalPage(int PageNumber, string? Content)
 {
