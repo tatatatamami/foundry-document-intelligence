@@ -2,14 +2,75 @@
 
 ## 1. Purpose
 
-Build a reusable document intelligence and search platform that can support
-multiple customer datasets without rebuilding the application.
+Build a reusable and configurable document intelligence and search platform
+that can support multiple customer datasets and document scenarios without
+rebuilding or forking the application for each customer.
 
-## 2. Primary scenarios
+The platform should provide a common foundation for document analysis,
+structured information extraction, indexing, discovery, and search.
+
+## 2. Background and goals
+
+The initial use cases include:
+
+- a workspace using actual customer-provided document data
+- a generic demonstration workspace that can be shown to other customers
+- future workspaces created from document datasets provided by additional customers
+
+The platform must therefore avoid dependencies on a specific customer,
+document type, industry, or demo dataset.
+
+Customer-specific document classifications, metadata definitions, analyzers,
+filters, facets, and evaluation datasets should be configurable whenever
+practical.
+
+The main goal is to allow a new document dataset or customer scenario to be
+introduced primarily through configuration rather than changes to the core
+application.
+
+## 3. Scope
+
+The initial platform scope includes:
+
+- Workspace-based dataset separation
+- Document ingestion from Azure Storage
+- Document analysis using Azure Content Understanding
+- Preservation of raw analyzer results
+- Transformation into a provider-independent canonical document model
+- Page-level search chunk generation
+- Optional region-level search chunk generation
+- Azure AI Search indexing
+- Keyword search
+- Vector search
+- Hybrid search
+- Semantic search where applicable
+- Filtering and faceting using configurable metadata
+- Search result traceability to source documents and pages
+- Reprocessing and re-indexing
+- Evaluation of search behavior using repeatable evaluation datasets
+- Infrastructure deployment using Bicep
+
+## 4. Out of scope
+
+The following are not initial requirements:
+
+- Customer-specific business workflow automation
+- Customer-specific search logic in shared components
+- Legal or contractual decision automation
+- Production-grade multi-tenant SaaS capabilities
+- Billing or chargeback functionality
+- Customer-facing administration portal
+- Generative RAG answers or agent functionality unless explicitly added later
+- Search tuning designed only to improve results for a specific demo query
+- Automatic replacement of human judgment for document interpretation
+
+These capabilities may be considered in later phases.
+
+## 5. Primary scenarios
 
 ### Document ingestion
 
-Users can register documents for a Workspace.
+Users or ingestion processes can register documents for a Workspace.
 
 The platform analyzes documents and produces structured information that can
 be indexed in Azure AI Search.
@@ -24,61 +85,293 @@ filters, and facets.
 Users can search documents using natural language and retrieve relevant
 documents, pages, or regions.
 
-### Evidence
+### Evidence and source verification
 
 Users can trace a search result back to the original document and page.
 
-## 3. Functional requirements
+Where available, extracted information should retain sufficient source
+information to identify its origin in the source document.
+
+### Reprocessing
+
+Documents can be reprocessed when:
+
+- analyzer configuration changes
+- metadata schema changes
+- processing logic changes
+- search index schema changes
+- previous processing failed
+
+Reprocessing must not create unintended duplicate search documents.
+
+## 6. Functional requirements
 
 ### FR-001 Workspace
 
 The platform shall support multiple Workspaces.
 
+Each document shall belong to a Workspace.
+
+Workspace-specific configuration should be separated from shared application
+logic.
+
 ### FR-002 Document ingestion
 
 The platform shall ingest supported documents from Azure Storage.
+
+The ingestion implementation shall not depend on customer-specific storage
+paths or file names.
 
 ### FR-003 Document analysis
 
 The platform shall analyze documents using Azure Content Understanding.
 
+Analyzer configuration shall be selectable or configurable by Workspace where
+required.
+
 ### FR-004 Raw result preservation
 
 The platform shall preserve the raw analyzer result.
 
+Raw analyzer results shall remain distinguishable from transformed application
+data.
+
 ### FR-005 Canonical model
 
-Analyzer results shall be transformed into a canonical document model.
+Analyzer results shall be transformed into a provider-independent canonical
+document model.
 
-### FR-006 Search chunk generation
+The core domain model shall not depend directly on Azure Content Understanding
+SDK or REST response types.
+
+### FR-006 Information origin
+
+The platform shall distinguish information explicitly found in the source
+document from information extracted, inferred, or generated by AI.
+
+At minimum, the following origins should be representable:
+
+- SourceExplicit
+- Extracted
+- Inferred
+- Generated
+
+### FR-007 Search chunk generation
 
 The platform shall generate page-level search chunks.
 
-Region-level chunks may be generated when appropriate.
+Region-level chunks may be generated when appropriate for the document
+structure and search scenario.
 
-### FR-007 Indexing
+Chunking behavior shall not contain customer-specific query exceptions.
+
+### FR-008 Indexing
 
 Search chunks shall be indexed into Azure AI Search.
 
-### FR-008 Search
+Indexing shall support safe re-indexing.
 
-The platform shall support keyword, vector, hybrid, and semantic search where
-applicable.
+### FR-009 Search
 
-### FR-009 Filtering
+The platform shall support the following search modes where applicable:
 
-Workspace-defined metadata shall be usable for filtering and faceting.
+- keyword search
+- vector search
+- hybrid search
+- semantic ranking
 
-### FR-010 Traceability
+Search implementation shall use a common query pipeline rather than
+customer-specific search implementations.
+
+### FR-010 Filtering and faceting
+
+Workspace-defined metadata shall be usable for filtering and faceting where
+supported by the search schema.
+
+### FR-011 Traceability
 
 Search results shall retain references to their source document and page.
 
-## 4. Non-functional requirements
+A user shall be able to navigate from a search result to the corresponding
+source document or document representation available to the application.
+
+### FR-012 Failure handling
+
+Failed documents shall be identifiable.
+
+Failed documents shall be reprocessable without requiring successful documents
+to be processed again unnecessarily.
+
+### FR-013 Configuration
+
+Customer-specific concepts should be configurable where practical.
+
+Shared components shall not hard-code:
+
+- customer names
+- game titles
+- product names
+- character names
+- contract-specific fields
+- customer-specific classifications
+
+## 7. Non-functional requirements
+
+### Security
+
+- Azure authentication should use Managed Identity where supported.
+- Secrets, credentials, API keys, and customer data must not be committed to
+  source control.
+- Azure permissions should follow least-privilege principles.
+- Customer datasets must not be unintentionally exposed across Workspaces.
+
+### Reproducibility
 
 - Azure environments must be reproducible using Bicep.
-- Azure authentication should use Managed Identity.
-- Processing must support retries.
+- Environment-specific values must be configurable.
+- Subscription IDs, tenant IDs, regions, and customer names must not be
+  hard-coded.
+
+### Reliability
+
+- Processing must support appropriate retry behavior.
 - Indexing must be idempotent.
 - Failed documents must be identifiable and reprocessable.
-- Search behavior must be testable through evaluation datasets.
+
+### Observability
+
+The platform should provide sufficient logging and telemetry to identify:
+
+- ingestion failures
+- document analysis failures
+- transformation failures
+- indexing failures
+- search application failures
+
+### Maintainability
+
 - Customer-specific behavior should be configuration-driven.
+- Azure-specific SDK types should not leak into the core Domain model.
+- Major processing stages should have explicit contracts.
+- Components should remain independently testable where practical.
+
+### Evaluation
+
+Search behavior must be testable through repeatable evaluation datasets.
+
+Production search logic must not contain special cases whose sole purpose is
+to make specific evaluation queries pass.
+
+## 8. Technical constraints
+
+The initial implementation shall use:
+
+- .NET 10
+- C#
+- ASP.NET Core / Blazor Web App
+- Microsoft Foundry
+- Azure Content Understanding
+- Azure AI Search
+- Azure Storage
+- Bicep
+- GitHub Actions
+- Application Insights / Azure Monitor
+- Microsoft Entra ID / Managed Identity
+
+Additional technologies should only be introduced when there is a documented
+requirement or architectural reason.
+
+Current Microsoft official documentation must be reviewed before implementing
+Microsoft or Azure service integrations.
+
+Current supported and recommended implementation approaches should be
+preferred.
+
+GA capabilities should be preferred when they satisfy the requirements.
+
+Preview capabilities must not be introduced without documenting:
+
+- why they are required
+- their current Preview status
+- relevant limitations
+- potential replacement or migration considerations
+
+## 9. Acceptance criteria
+
+### AC-001 Workspace extensibility
+
+A new Workspace can be added without modifying the core application for
+customer-specific names or business rules.
+
+### AC-002 Environment reproducibility
+
+A clean Azure environment can be provisioned from the repository using Bicep
+and documented configuration.
+
+### AC-003 Document ingestion
+
+A supported document stored in Azure Storage can be submitted to the ingestion
+pipeline.
+
+### AC-004 Document analysis
+
+The document can be analyzed using Azure Content Understanding and the raw
+analysis result can be preserved.
+
+### AC-005 Canonical transformation
+
+The analysis result can be transformed into the Canonical Document Model
+without exposing Azure Content Understanding-specific types to the Domain
+layer.
+
+### AC-006 Search indexing
+
+Canonical document information can be transformed into Search Documents and
+indexed into Azure AI Search.
+
+### AC-007 Search
+
+An indexed document can be retrieved using the supported search pipeline.
+
+### AC-008 Traceability
+
+A search result can be traced back to the original document and page.
+
+### AC-009 Reprocessing
+
+A failed or previously processed document can be safely reprocessed without
+creating unintended duplicate search documents.
+
+### AC-010 Customer independence
+
+Shared application components contain no hard-coded customer names,
+customer-specific domain values, or query-specific demo optimizations.
+
+### AC-011 Validation
+
+The solution builds successfully and the applicable automated tests pass.
+
+## 10. Assumptions
+
+- Different Workspaces may require different metadata schemas.
+- Different document types may require different analyzer configurations.
+- Physical Azure resource isolation may differ by customer security
+  requirements.
+- The core platform should remain reusable even when resource isolation differs.
+- The initial implementation is a reusable demonstration and PoC platform,
+  not a production multi-tenant SaaS product.
+
+## 11. Open questions
+
+The following decisions should be resolved during architecture and
+implementation planning:
+
+- Application-controlled embedding and indexing vs Azure AI Search integrated
+  vectorization
+- Azure Functions vs Azure Container Apps Jobs for ingestion orchestration
+- Search index isolation strategy per Workspace or customer
+- Storage isolation strategy per Workspace or customer
+- Content Understanding GA API / SDK implementation approach
+- Initial supported document formats
+- Initial Generic Demo dataset
+- Authentication requirements for the Blazor Web application
