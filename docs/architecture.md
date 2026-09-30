@@ -447,6 +447,20 @@ Secrets and service keys must not be committed to source control.
 Authentication and RBAC implementation must be validated against current
 Microsoft official documentation before deployment.
 
+### Phase 1 implementation status
+
+Managed Identities and RBAC assignments are not implemented in Phase 1. The
+ingestion host decision in ADR-001 determines how workload identities are
+attached. The required data-plane roles and assignment scopes depend on the
+Storage, Search, and Content Understanding resources and isolation decisions in
+ADRs 002-005. The current infrastructure module defines monitoring resources
+only and does not provide application hosts or data-resource scopes.
+
+Therefore, the Definition of Done criteria for Managed Identity and least-
+privilege RBAC remain incomplete. Resolve the applicable ADRs and validate
+identity attachment, roles, and scopes against current Microsoft guidance before
+deployment or onboarding customer data.
+
 ---
 
 ## 12. Observability
