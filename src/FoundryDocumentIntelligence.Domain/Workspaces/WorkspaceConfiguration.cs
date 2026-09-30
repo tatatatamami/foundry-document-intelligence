@@ -1,15 +1,40 @@
+using FoundryDocumentIntelligence.Domain.Documents;
+
 namespace FoundryDocumentIntelligence.Domain.Workspaces;
 
 public sealed record WorkspaceConfiguration(
     WorkspaceId WorkspaceId,
-    string? AnalyzerConfigurationId,
+    AnalyzerConfiguration Analyzer,
     IReadOnlyList<MetadataFieldDefinition> MetadataSchema,
-    IReadOnlyList<string> Classifications,
+    WorkspaceTaxonomy Taxonomy,
     IReadOnlyList<string> FilterFields,
     IReadOnlyList<string> FacetFields,
     string? EvaluationDataset);
 
-public sealed record MetadataFieldDefinition(string Name, MetadataValueType Type);
+public sealed record AnalyzerConfiguration(string AnalyzerId, string ApiVersion);
+
+public sealed record WorkspaceTaxonomy(
+    TaxonomyDefinition DocumentCategories,
+    TaxonomyDefinition ContentIndexes,
+    TaxonomyDefinition SemanticTags,
+    TaxonomyDefinition DevelopmentPhases);
+
+public sealed record TaxonomyDefinition(
+    string Name,
+    bool AllowsMultipleValues,
+    IReadOnlyList<TaxonomyOption> Options);
+
+public sealed record TaxonomyOption(
+    string Value,
+    string DisplayName,
+    string Description,
+    string ProviderFieldName);
+
+public sealed record MetadataFieldDefinition(
+    string Name,
+    MetadataValueType Type,
+    bool AllowsMultipleValues,
+    InformationOrigin ExpectedOrigin);
 
 public enum MetadataValueType
 {

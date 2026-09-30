@@ -1,0 +1,76 @@
+{
+  "description": "Extracts document-level metadata and enrichment from Japanese planning, production instruction, and specification documents. Values must be based only on the analyzed document.",
+  "baseAnalyzerId": "prebuilt-document",
+  "models": {
+    "completion": "gpt-4.1-mini"
+  },
+  "config": {
+    "returnDetails": true,
+    "enableOcr": true,
+    "enableLayout": true,
+    "enableFormula": false,
+    "enableBarcode": false,
+    "estimateFieldSourceAndConfidence": true,
+    "tableFormat": "html"
+  },
+  "fieldSchema": {
+    "name": "DemoDocumentMetadata",
+    "fields": {
+      "documentDate": {
+        "type": "date",
+        "method": "extract",
+        "estimateSourceAndConfidence": true,
+        "description": "A date explicitly printed or written in the source document that reliably represents the document date. Do not infer a date or year from contextual clues. Return no value when no reliable explicit document date exists."
+      },
+      "documentCategory": {
+        "type": "string",
+        "method": "classify",
+        "enum": ["企画資料", "制作指示", "仕様書", "その他"],
+        "estimateSourceAndConfidence": true,
+        "description": "Classify the primary purpose of the entire document into exactly one configured category. Use その他 when none of the other categories is adequately supported."
+      },
+      "contentIndexes": {
+        "type": "array",
+        "method": "generate",
+        "items": {
+          "type": "string",
+          "enum": ["Program", "Graphic", "Sound"]
+        },
+        "estimateSourceAndConfidence": true,
+        "description": "Select zero or more configured production areas that are materially discussed in the document. Return only values from the configured list. Do not select an area without document support."
+      },
+      "semanticTags": {
+        "type": "array",
+        "method": "generate",
+        "items": {
+          "type": "string",
+          "enum": [
+            "キャラクター",
+            "敵・ボス",
+            "操作・アクション",
+            "ステージ・マップ",
+            "画面・UI",
+            "ストーリー・設定",
+            "アイテム",
+            "音楽・効果音"
+          ]
+        },
+        "estimateSourceAndConfidence": true,
+        "description": "Select zero or more configured semantic concepts that are materially present in the document. Return only values from the configured list. Do not add concepts unsupported by the document."
+      },
+      "summary": {
+        "type": "string",
+        "method": "generate",
+        "estimateSourceAndConfidence": true,
+        "description": "Provide a concise Japanese summary in one or two sentences. Include only information supported by the document. Do not introduce external facts, assumptions, or inferred background."
+      },
+      "developmentPhase": {
+        "type": "string",
+        "method": "classify",
+        "enum": ["企画", "制作", "調整", "完成", "未設定"],
+        "estimateSourceAndConfidence": true,
+        "description": "Classify the document development phase using explicit content and sufficiently strong document evidence. Select 未設定 when the phase cannot be determined reliably."
+      }
+    }
+  }
+}

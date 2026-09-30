@@ -5,13 +5,8 @@ namespace FoundryDocumentIntelligence.Domain.Documents;
 public sealed record CanonicalDocument(
     DocumentId DocumentId,
     WorkspaceId WorkspaceId,
-    string Source,
-    string? Title,
-    string? Summary,
-    string? DocumentType,
     IReadOnlyList<CanonicalPage> Pages,
     IReadOnlyDictionary<string, CanonicalMetadataValue> Metadata,
-    IReadOnlyList<string> Tags,
     IReadOnlyList<CanonicalEntity> Entities);
 
 public sealed record CanonicalMetadataValue(
@@ -20,7 +15,7 @@ public sealed record CanonicalMetadataValue(
     double? Confidence,
     IReadOnlyList<Evidence> Evidence);
 
-public sealed record CanonicalPage(int PageNumber, string? Content)
+public sealed record CanonicalPage(PageId PageId, int PageNumber, string? Content)
 {
     public IReadOnlyList<CanonicalTable> Tables { get; init; } = [];
 

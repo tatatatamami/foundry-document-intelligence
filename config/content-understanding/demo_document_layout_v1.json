@@ -1,0 +1,34 @@
+{
+  "description": "Extracts OCR, layout, pages, tables, figures, bounding regions, source grounding, provider confidence, and an explicitly stated document date when available.",
+  "baseAnalyzerId": "prebuilt-document",
+  "models": {
+    "completion": "gpt-4.1-mini",
+    "embedding": "prebuilt-analyzer-embedding"
+  },
+  "config": {
+    "returnDetails": true,
+    "enableOcr": true,
+    "enableLayout": true,
+    "enableFormula": false,
+    "enableFigureDescription": false,
+    "enableFigureAnalysis": false,
+    "chartFormat": "chartjs",
+    "tableFormat": "html",
+    "estimateFieldSourceAndConfidence": true,
+    "enableSegment": false,
+    "omitContent": false,
+    "segmentPerPage": false,
+    "annotationFormat": "markdown"
+  },
+  "fieldSchema": {
+    "name": "CanonicalSourceFields",
+    "fields": {
+      "documentDate": {
+        "type": "date",
+        "method": "extract",
+        "description": "A date explicitly printed or written in the source document that reliably represents the document date. Do not infer a date or year from contextual clues. Return no value when no reliable explicit document date exists.",
+        "estimateSourceAndConfidence": true
+      }
+    }
+  }
+}

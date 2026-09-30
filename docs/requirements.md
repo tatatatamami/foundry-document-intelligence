@@ -361,17 +361,17 @@ The solution builds successfully and the applicable automated tests pass.
 - The initial implementation is a reusable demonstration and PoC platform,
   not a production multi-tenant SaaS product.
 
-## 11. Open questions
+## 11. Initial demo decisions
 
-The following decisions should be resolved during architecture and
-implementation planning:
-
-- Application-controlled embedding and indexing vs Azure AI Search integrated
-  vectorization
-- Azure Functions vs Azure Container Apps Jobs for ingestion orchestration
-- Search index isolation strategy per Workspace or customer
-- Storage isolation strategy per Workspace or customer
-- Content Understanding GA API / SDK implementation approach
-- Initial supported document formats
-- Initial Generic Demo dataset
-- Authentication requirements for the Blazor Web application
+- The demo uses application-controlled page chunking, embedding, and Azure AI
+  Search push indexing.
+- Local ingestion is orchestrated by a CLI. A production Functions or Container
+  Apps Jobs host remains deferred.
+- Every shared-index query applies a mandatory Workspace filter. Stronger
+  physical isolation remains configurable.
+- Demo artifacts use the ignored local file system; production storage remains
+  an infrastructure decision.
+- Content Understanding uses the GA `2025-11-01` REST API.
+- Initial source formats are `.jpg`, `.jpeg`, `.png`, and `.pdf`.
+- The local Blazor application uses developer credentials. Hosted environments
+  retain Managed Identity as the preferred authentication mechanism.

@@ -1,0 +1,118 @@
+{
+  "description": "日本語の企画資料、制作指示、仕様書、記録資料から文書レベルのメタデータとAI Enrichmentを生成する。値は解析対象の文書内容だけに基づく。",
+  "baseAnalyzerId": "prebuilt-document",
+  "models": {
+    "completion": "gpt-4.1-mini"
+  },
+  "config": {
+    "returnDetails": true,
+    "enableOcr": true,
+    "enableLayout": true,
+    "enableFormula": false,
+    "enableBarcode": false,
+    "estimateFieldSourceAndConfidence": true,
+    "tableFormat": "html"
+  },
+  "fieldSchema": {
+    "name": "DemoDocumentMetadataV2",
+    "fields": {
+      "documentDate": {
+        "type": "date",
+        "method": "extract",
+        "estimateSourceAndConfidence": true,
+        "description": "資料の日付として明示的に印刷または記載された、信頼できる日付を抽出する。文脈から日付や年を推測せず、明示的な日付がない場合は値を返さない。"
+      },
+      "documentCategory": {
+        "type": "string",
+        "method": "classify",
+        "enum": [
+          "企画資料",
+          "制作指示",
+          "仕様書",
+          "その他"
+        ],
+        "estimateSourceAndConfidence": true,
+        "description": "文書全体の主目的を、次の肯定的な判定条件に基づいて1つ分類する。 企画資料: 企画の目的、コンセプト、対象ユーザー、提供したい体験、アイデア、方針、初期検討事項を中心に扱う資料。 制作指示: 制作担当者が実行する具体的な作業、修正内容、対象箇所、制作条件、納品物を指示する資料。 仕様書: 機能、画面、操作、データ、入出力、処理条件、制約、判定条件など、実装や再現に必要な仕様を定義する資料。 その他: 会議記録、進捗報告、意見集約、参考情報、連絡事項など、記録や情報共有を主目的とする資料。"
+      },
+      "contentIndexes": {
+        "type": "object",
+        "method": "generate",
+        "properties": {
+          "Program": {
+            "type": "boolean",
+            "description": "Program: プログラム実装、ゲームロジック、操作制御、状態遷移、処理条件、データ処理、システム動作を扱う内容が含まれる。"
+          },
+          "Graphic": {
+            "type": "boolean",
+            "description": "Graphic: キャラクター、背景、アニメーション、画面、UI、レイアウト、色、描画など視覚表現を扱う内容が含まれる。"
+          },
+          "Sound": {
+            "type": "boolean",
+            "description": "Sound: 音楽、効果音、音声、再生条件、音量、タイミングなど音響表現を扱う内容が含まれる。"
+          }
+        },
+        "estimateSourceAndConfidence": true,
+        "description": "文書で実質的に扱われている制作領域を判定する。各Propertyは、対応する判定条件を満たす内容が含まれる場合にtrueとし、複数をtrueにできる。"
+      },
+      "semanticTags": {
+        "type": "object",
+        "method": "generate",
+        "properties": {
+          "Character": {
+            "type": "boolean",
+            "description": "キャラクター: 登場人物の外見、性格、役割、能力、動作、関係性などを扱う内容が含まれる。"
+          },
+          "EnemyBoss": {
+            "type": "boolean",
+            "description": "敵・ボス: 敵またはボスの種類、行動、攻撃、能力、配置、攻略要素などを扱う内容が含まれる。"
+          },
+          "ControlsActions": {
+            "type": "boolean",
+            "description": "操作・アクション: 入力方法、プレイヤー操作、移動、攻撃、ジャンプ、特殊行動などを扱う内容が含まれる。"
+          },
+          "StageMap": {
+            "type": "boolean",
+            "description": "ステージ・マップ: ステージ構成、地形、経路、エリア、マップ、配置、進行順序などを扱う内容が含まれる。"
+          },
+          "ScreenUi": {
+            "type": "boolean",
+            "description": "画面・UI: 画面構成、表示項目、メニュー、HUD、画面遷移、情報提示などを扱う内容が含まれる。"
+          },
+          "StorySetting": {
+            "type": "boolean",
+            "description": "ストーリー・設定: 物語、世界観、舞台、背景設定、出来事、会話、人物関係などを扱う内容が含まれる。"
+          },
+          "Item": {
+            "type": "boolean",
+            "description": "アイテム: 取得物、装備、道具、報酬、効果、使用条件、所持や管理などを扱う内容が含まれる。"
+          },
+          "MusicSoundEffects": {
+            "type": "boolean",
+            "description": "音楽・効果音: BGM、効果音、音声、再生場面、音の演出やフィードバックなどを扱う内容が含まれる。"
+          }
+        },
+        "estimateSourceAndConfidence": true,
+        "description": "文書で実質的に扱われている意味的概念を判定する。各Propertyは、対応する判定条件を満たす内容が含まれる場合にtrueとし、複数をtrueにできる。"
+      },
+      "summary": {
+        "type": "string",
+        "method": "generate",
+        "estimateSourceAndConfidence": true,
+        "description": "資料によって裏付けられる主要内容だけを、簡潔な日本語1～2文で要約する。外部知識、仮定、資料にない事実を追加しない。"
+      },
+      "developmentPhase": {
+        "type": "string",
+        "method": "classify",
+        "enum": [
+          "企画",
+          "制作",
+          "調整",
+          "完成",
+          "未設定"
+        ],
+        "estimateSourceAndConfidence": true,
+        "description": "文書内容が示す開発段階を、次の肯定的な判定条件に基づいて1つ分類する。特定段階の根拠が十分でない場合は未設定を選ぶ。 企画: 目的、コンセプト、要件、体験、方向性、候補案など、制作開始前または初期の検討を扱う。 制作: プログラム、画像、音、データなどの具体的な作成、実装、組み込み、制作指示を扱う。 調整: テスト結果、不具合修正、バランス調整、品質改善、演出調整、レビュー後の変更を扱う。 完成: 最終承認、完成版、納品、公開、リリース、確定済み成果物を扱う。 未設定: 一般的な説明や複数段階の情報が中心で、特定の開発段階を判断できる記述が十分に含まれない。"
+      }
+    }
+  }
+}

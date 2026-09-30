@@ -19,6 +19,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\FoundryDocumentIntelligence.Domain\FoundryDocumentIntelligence.Domain.csproj" />
+    <ProjectReference Include="..\..\src\FoundryDocumentIntelligence.Application\FoundryDocumentIntelligence.Application.csproj" />
+    <ProjectReference Include="..\..\src\FoundryDocumentIntelligence.Infrastructure\FoundryDocumentIntelligence.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

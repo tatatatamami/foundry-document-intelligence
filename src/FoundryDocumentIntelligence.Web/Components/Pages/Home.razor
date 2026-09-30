@@ -1,5 +1,163 @@
-﻿@page "/"
+@page "/"
+@rendermode InteractiveServer
+@inject IHybridSearchService SearchService
+@inject DemoWorkspaceSettings Settings
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Document Search</PageTitle>
 
-<h1>Foundry Document Intelligence</h1>
+<main class="demo-shell">
+    <header class="hero">
+        <span class="eyebrow">Foundry Document Intelligence</span>
+        <h1>資料を横断して、必要なページへ。</h1>
+        <p>キーワードとベクトルを組み合わせ、資料分類・制作領域・意味タグで絞り込みます。</p>
+    </header>
+
+    <section class="search-panel">
+        <div class="search-row">
+            <input class="search-input"
+                   @bind="_query"
+                   @bind:event="oninput"
+                   @onkeydown="HandleKeyDown"
+                   placeholder="例: キャラクターの表情や操作性に関する意見" />
+            <button class="search-button"
+                    @onclick="SearchAsync"
+                    disabled="@(_isSearching || string.IsNullOrWhiteSpace(_query))">
+                @(_isSearching ? "検索中…" : "検索")
+            </button>
+        </div>
+
+        <div class="filters">
+            <label>
+                資料分類
+                <select @bind="_documentCategory">
+                    <option value="">すべて</option>
+                    @foreach (var option in Settings.Taxonomy.DocumentCategories.Options)
+                    {
+                        <option value="@option.Value">@option.DisplayName</option>
+                    }
+                </select>
+            </label>
+            <label>
+                Content Index
+                <select @bind="_contentIndex">
+                    <option value="">すべて</option>
+                    @foreach (var option in Settings.Taxonomy.ContentIndexes.Options)
+                    {
+                        <option value="@option.Value">@option.DisplayName</option>
+                    }
+                </select>
+            </label>
+            <label>
+                Semantic Tag
+                <select @bind="_semanticTag">
+                    <option value="">すべて</option>
+                    @foreach (var option in Settings.Taxonomy.SemanticTags.Options)
+                    {
+                        <option value="@option.Value">@option.DisplayName</option>
+                    }
+                </select>
+            </label>
+        </div>
+    </section>
+
+    @if (_error is not null)
+    {
+        <div class="error-message" role="alert">@_error</div>
+    }
+
+    @if (_hasSearched && !_isSearching)
+    {
+        <div class="result-heading">
+            <h2>検索結果</h2>
+            <span>@_results.Count 件</span>
+        </div>
+
+        @if (_results.Count == 0)
+        {
+            <div class="empty-state">条件に一致するページがありません。</div>
+        }
+        else
+        {
+            <div class="result-list">
+                @foreach (var result in _results)
+                {
+                    <article class="result-card">
+                        <div class="result-meta">
+                            <span class="file-name">@result.SourceFileName</span>
+                            <span>Page @result.PageNumber</span>
+                            <span>Score @result.Score.ToString("0.000")</span>
+                        </div>
+                        <h3>@(result.DocumentCategory ?? "未分類")</h3>
+                        @if (!string.IsNullOrWhiteSpace(result.Summary))
+                        {
+                            <p class="summary">@result.Summary</p>
+                        }
+                        <p class="snippet">@result.Snippet</p>
+                        <div class="tags">
+                            @foreach (var index in result.ContentIndexes)
+                            {
+                                <span class="tag tag-index">@index</span>
+                            }
+                            @foreach (var tag in result.SemanticTags)
+                            {
+                                <span class="tag">@tag</span>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    }
+</main>
+
+@code {
+    private string _query = string.Empty;
+    private string _documentCategory = string.Empty;
+    private string _contentIndex = string.Empty;
+    private string _semanticTag = string.Empty;
+    private bool _isSearching;
+    private bool _hasSearched;
+    private string? _error;
+    private IReadOnlyList<DocumentSearchResult> _results = [];
+
+    private async Task SearchAsync()
+    {
+        if (_isSearching || string.IsNullOrWhiteSpace(_query))
+        {
+            return;
+        }
+
+        _isSearching = true;
+        _error = null;
+        try
+        {
+            _results = await SearchService.SearchAsync(new DocumentSearchQuery(
+                new(Settings.WorkspaceId),
+                _query.Trim(),
+                EmptyToNull(_documentCategory),
+                EmptyToNull(_contentIndex),
+                EmptyToNull(_semanticTag)));
+            _hasSearched = true;
+        }
+        catch (Exception exception)
+        {
+            _error = $"検索に失敗しました: {exception.Message}";
+            _results = [];
+        }
+        finally
+        {
+            _isSearching = false;
+        }
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+        {
+            await SearchAsync();
+        }
+    }
+
+    private static string? EmptyToNull(string value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value;
+}

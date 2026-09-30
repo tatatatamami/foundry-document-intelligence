@@ -23,6 +23,7 @@ Azure Storage
 → Azure Content Understanding
 → Raw Analysis Result
 → Canonical Document Model
+→ Application-controlled AI Enrichment
 → Search Chunk Generation
 → Embedding / Vectorization
 → Azure AI Search
@@ -71,7 +72,13 @@ Characteristics:
 The Canonical Document Model is the primary boundary between document analysis
 and downstream indexing.
 
-### Search Document
+Application-controlled AI enrichment updates the Canonical Document metadata
+after Content Understanding transformation. The enrichment stage uses the
+Workspace taxonomy and strict structured output. It does not create a parallel
+document model, and it does not invent evidence or confidence values that the
+model provider did not return.
+
+### Search Chunk
 
 A representation optimized for Azure AI Search.
 
@@ -79,7 +86,8 @@ Characteristics:
 
 - generated from the Canonical Document Model
 - designed for retrieval, filtering, faceting, and ranking
-- may represent a document, page, or region
+- represents one page in the initial implementation
+- projects document-level metadata onto each page
 - retains references to the Canonical Document and original source
 
 See `docs/data-model.md` for detailed data contracts.
@@ -294,7 +302,7 @@ Storage paths must not encode customer-specific application logic.
 
 Azure AI Search is the retrieval layer.
 
-Search Documents are generated from the Canonical Document Model.
+Search Chunks are generated from the enriched Canonical Document Model.
 
 The search layer may support:
 
@@ -327,15 +335,9 @@ Every Search Document must retain enough information to identify:
 
 ### Vectorization
 
-The exact vectorization implementation is an architecture decision.
-
-The implementation must evaluate current Microsoft-recommended approaches,
-including:
-
-- application-controlled chunking / embedding / push indexing
-- Azure AI Search integrated vectorization where applicable
-
-The selected approach must preserve:
+The initial implementation uses application-controlled page chunking,
+embedding, and push indexing. The embedding deployment and vector dimensions
+are selected through Workspace configuration. The approach preserves:
 
 - Canonical Document Model
 - traceability
@@ -357,7 +359,9 @@ Conceptual stages:
 Received
 → Analyzing
 → Transforming
+→ Enriching
 → Chunking
+→ Embedding
 → Indexing
 → Completed
 

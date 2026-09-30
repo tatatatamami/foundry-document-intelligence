@@ -28,16 +28,11 @@ public class CanonicalDocumentTests
         var document = new CanonicalDocument(
             new DocumentId(Guid.NewGuid()),
             new WorkspaceId(Guid.NewGuid()),
-            "source",
-            null,
-            null,
-            null,
             [],
             new Dictionary<string, CanonicalMetadataValue>
             {
                 ["classification"] = metadataValue
             },
-            [],
             []);
 
         var result = document.Metadata["classification"];
@@ -46,5 +41,34 @@ public class CanonicalDocumentTests
         Assert.Equal(origin, result.Origin);
         Assert.Equal(0.93, result.Confidence);
         Assert.Contains(evidence, result.Evidence);
+    }
+
+    [Fact]
+    public void Identity_DoesNotRequireInformationOrigin()
+    {
+        var documentId = new DocumentId(Guid.NewGuid());
+        var workspaceId = new WorkspaceId(Guid.NewGuid());
+        var pageId = new PageId($"{documentId.Value:N}-page-0001");
+
+        var document = new CanonicalDocument(
+            documentId,
+            workspaceId,
+            [new CanonicalPage(pageId, 1, "content")],
+            new Dictionary<string, CanonicalMetadataValue>
+            {
+                ["sourceFileName"] = new(
+                    "sample.jpg",
+                    InformationOrigin.SystemAssigned,
+                    null,
+                    [])
+            },
+            []);
+
+        Assert.Equal(documentId, document.DocumentId);
+        Assert.Equal(workspaceId, document.WorkspaceId);
+        Assert.Equal(pageId, document.Pages[0].PageId);
+        Assert.Equal(
+            InformationOrigin.SystemAssigned,
+            document.Metadata["sourceFileName"].Origin);
     }
 }
